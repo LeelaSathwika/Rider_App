@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../constants.dart';
+import '../../rides/ProfileScreen.dart';
+import '../../rides/ride_history.dart';
 import 'home_screen.dart';
 
 class MainNavigationWrapper extends StatefulWidget {
@@ -20,8 +22,10 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
         children: [
           HomeScreen(address: pickupAddress, onUpdate: (v) => setState(() => pickupAddress = v)),
           const Center(child: Text("Services Screen")),
-          const Center(child: Text("History Screen")),
-          const Center(child: Text("Profile Screen")),
+          // const Center(child: Text("History Screen")),
+          RideHistoryScreen(),
+          // const Center(child: Text("Profile Screen")),
+          ProfileScreen(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(

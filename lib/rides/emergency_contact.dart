@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-class WalletScreen extends StatefulWidget {
-  const WalletScreen({super.key});
+class Emergency_Contact extends StatefulWidget {
+  const Emergency_Contact({super.key});
 
   @override
-  State<WalletScreen> createState() => _WalletScreenState();
+  State<Emergency_Contact> createState() => _Emergency_ContactState();
 }
 
-class _WalletScreenState extends State<WalletScreen> {
+class _Emergency_ContactState extends State<Emergency_Contact> {
   List<Map<String, String>> contacts = [
     {"name": "Mom", "phone": "+91 98765 43210"},
     {"name": "Priya", "phone": "+91 98765 43210"},
