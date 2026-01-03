@@ -3,6 +3,12 @@
         android:label="riders"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+
+        <meta-data
+            android:name="com.mapbox.maps.token"
+            android:value="pk.eyJ1IjoicmFqZW5kcmE5OTUwIiwiYSI6ImNtajhsajg0MDAxYnYzcHF0c3Z1bjM0OGIifQ.VQCWQADfuUyVO_6Qch8jUQ"/>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

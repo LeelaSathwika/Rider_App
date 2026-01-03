@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class Screen6 extends StatefulWidget {
-  const Screen6({super.key});
+class mobilenumber extends StatefulWidget {
+  const mobilenumber({super.key});
 
   @override
-  State<Screen6> createState() => _Screen6State();
+  State<mobilenumber> createState() => _mobilenumberState();
 }
 
-class _Screen6State extends State<Screen6> {
+class _mobilenumberState extends State<mobilenumber> {
   final TextEditingController _mobileController = TextEditingController();
 
   @override

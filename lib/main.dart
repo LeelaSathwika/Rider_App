@@ -2,7 +2,7 @@
 import 'package:flutter/cupertino.dart' show StatelessWidget, runApp, BuildContext, Widget;
 import 'package:flutter/material.dart';
 
-import 'onboarding.dart';
+import 'onboarding/onboarding_screen.dart';
 
 
 void main() {
