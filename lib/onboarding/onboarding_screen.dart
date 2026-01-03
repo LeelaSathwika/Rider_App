@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants.dart';
-import 'login_screen.dart';
+import '../screens/login_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -14,17 +14,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<Map<String, dynamic>> _pages = [
     {
-      "image": "assets/images/onboarding1.png",
+      "image": "assets/images/smartride.png",
       "title": "Smart rides. one app.",
       "features": ["Personal rides, anytime", "Easy office commutes", "Shared & scheduled trips"]
     },
     {
-      "image": "assets/images/onboarding2.png",
+      "image": "assets/images/smartride.png",
       "title": "Office Trips, All Set",
       "features": ["Auto pickup for login rides", "Easy request for logout rides", "Company-managed billing"]
     },
     {
-      "image": "assets/images/onboarding3.png",
+      "image": "assets/images/saftycomes.png",
       "title": "Safety Comes First",
       "features": ["Women-only ride option", "Live tracking & ride PIN", "SOS & family sharing"]
     },

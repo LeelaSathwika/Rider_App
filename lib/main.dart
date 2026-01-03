@@ -11,7 +11,7 @@ class NexoRydApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(scaffoldBackgroundColor: AppColors.bg, fontFamily: 'sans-serif'),
-      home: const SplashScreen(),
+      home:  SplashScreen(),
     );
   }
 }

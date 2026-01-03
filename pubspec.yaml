@@ -43,7 +43,8 @@ dev_dependencies:
   latlong2: ^0.9.1        # For coordinate objects (LatLng)
   geolocator: ^13.0.0       # For getting device current location
   mapbox_search: ^4.3.2    # For geocoding and address searching
-  http: ^1.2.0 
+  http: ^1.2.0
+  mapbox_maps_flutter: ^2.17.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -63,7 +64,8 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-       - assets/images/
+       - assets/images/saftycomes.png
+       - assets/images/smartride.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
