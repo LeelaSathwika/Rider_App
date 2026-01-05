@@ -3,15 +3,15 @@ import 'package:mapbox_search/mapbox_search.dart' as mb;
 import 'dart:async';
 import '../../constants.dart';
 
-class LocationSearchScreen extends StatefulWidget {
+class DestinationSearchScreen extends StatefulWidget {
   final String title;
-  const LocationSearchScreen({super.key, required this.title});
+  const DestinationSearchScreen({super.key, required this.title});
 
   @override
-  State<LocationSearchScreen> createState() => _LocationSearchScreenState();
+  State<DestinationSearchScreen> createState() => _DestinationSearchScreenState();
 }
 
-class _LocationSearchScreenState extends State<LocationSearchScreen> {
+class _DestinationSearchScreenState extends State<DestinationSearchScreen> {
   List<mb.MapBoxPlace> _searchResults = [];
   Timer? _debounce;
   final mb.GeoCoding geoCoding = mb.GeoCoding(apiKey: mapboxToken);
