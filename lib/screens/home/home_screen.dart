@@ -181,22 +181,11 @@ import 'destination_search_screen.dart'; // Import the new search screen
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:http/http.dart' as http;
 
-import 'pickup_location_screen.dart';
-import 'destination_search_screen.dart';
-import 'dart:async';
-import 'dart:convert';
 
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
-import 'package:http/http.dart' as http;
-import 'package:geolocator/geolocator.dart' as geo;
 
 class HomeScreen extends StatefulWidget {
   final String address;
