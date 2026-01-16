@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../constants.dart';
-import 'onboarding_screen.dart';
+import '../onboarding/onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -17,12 +17,16 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     Timer(const Duration(seconds: 3), () {
+<<<<<<< HEAD
       if (mounted) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const OnboardingScreen()),
         );
       }
+=======
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => OnboardingScreen()));
+>>>>>>> e53c68027767e61c03ff3f45536a904ed71f7019
     });
   }
 

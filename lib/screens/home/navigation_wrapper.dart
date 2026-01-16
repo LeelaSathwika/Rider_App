@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../constants.dart';
+import '../../rides/ProfileScreen.dart';
+import '../../rides/ride_history.dart';
 import 'home_screen.dart';
 import 'ride_history_screen.dart';
 import 'profile_screen.dart';
@@ -30,8 +32,20 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
 
     return Scaffold(
       body: IndexedStack(
+<<<<<<< HEAD
         index: _currentIndex,
         children: _tabs,
+=======
+        index: _index,
+        children: [
+          HomeScreen(address: pickupAddress, onUpdate: (v) => setState(() => pickupAddress = v)),
+          const Center(child: Text("Services Screen")),
+          // const Center(child: Text("History Screen")),
+          RideHistoryScreen(),
+          // const Center(child: Text("Profile Screen")),
+          ProfileScreen(),
+        ],
+>>>>>>> e53c68027767e61c03ff3f45536a904ed71f7019
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,

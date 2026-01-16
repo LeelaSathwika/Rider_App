@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import '../constants.dart';
+<<<<<<< HEAD:lib/screens/onboarding_screen.dart
 import '../widgets/shared_widgets.dart'; // Ensure ExactBlueTick is defined here
 import 'login_screen.dart';
+=======
+import '../screens/login_screen.dart';
+>>>>>>> e53c68027767e61c03ff3f45536a904ed71f7019:lib/onboarding/onboarding_screen.dart
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -17,17 +21,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   // Data and Image positioning
   final List<Map<String, dynamic>> _pages = [
     {
+<<<<<<< HEAD:lib/screens/onboarding_screen.dart
+=======
+      "image": "assets/images/smartride.png",
+>>>>>>> e53c68027767e61c03ff3f45536a904ed71f7019:lib/onboarding/onboarding_screen.dart
       "title": "Smart rides. one app.",
       "image": "assets/images/onboarding1.png",
       "w": 434.0, "h": 434.0, "t": 35.0, "l": -23.0,
       "features": ["Personal rides, anytime", "Easy office commutes", "Shared & scheduled trips"]
     },
     {
+<<<<<<< HEAD:lib/screens/onboarding_screen.dart
+=======
+      "image": "assets/images/smartride.png",
+>>>>>>> e53c68027767e61c03ff3f45536a904ed71f7019:lib/onboarding/onboarding_screen.dart
       "title": "Office Trips, All Set",
       "image": null, // Page 2: White space
       "features": ["Auto pickup for login rides", "Easy request for logout rides", "Company-managed billing"]
     },
     {
+<<<<<<< HEAD:lib/screens/onboarding_screen.dart
+=======
+      "image": "assets/images/saftycomes.png",
+>>>>>>> e53c68027767e61c03ff3f45536a904ed71f7019:lib/onboarding/onboarding_screen.dart
       "title": "Safety Comes First",
       "image": "assets/images/onboarding3.png",
       "w": 732.0, "h": 409.0, "t": 51.0, "l": -165.0,

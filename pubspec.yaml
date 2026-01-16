@@ -42,11 +42,18 @@ dev_dependencies:
   flutter_map: ^8.0.0      # For the interactive map
   latlong2: ^0.9.1        # For coordinate objects (LatLng)
   geolocator: ^13.0.0       # For getting device current location
+<<<<<<< HEAD
   mapbox_search: ^4.3.2
   mapbox_maps_flutter: ^2.5.0     # For geocoding and address searching
   http: ^1.2.0 
   intl: ^0.19.0
   google_fonts: ^6.2.1
+=======
+  mapbox_search: ^4.3.2    # For geocoding and address searching
+  http: ^1.2.0
+  mapbox_maps_flutter: ^2.17.0
+  geocoding: ^3.0.0
+>>>>>>> e53c68027767e61c03ff3f45536a904ed71f7019
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -66,6 +73,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
+<<<<<<< HEAD
        - assets/images/onboarding1.png
        - assets/images/onboarding3.png
        - assets/images/bike.png
@@ -74,6 +82,10 @@ flutter:
        - assets/images/car6.png
        - assets/images/pillion.png
        - assets/images/corp.png
+=======
+       - assets/images/saftycomes.png
+       - assets/images/smartride.png
+>>>>>>> e53c68027767e61c03ff3f45536a904ed71f7019
 
   # To add assets to your application, add an assets section, like this:
   # assets:
