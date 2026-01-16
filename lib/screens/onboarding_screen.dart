@@ -1,31 +1,36 @@
 import 'package:flutter/material.dart';
 import '../constants.dart';
+import '../widgets/shared_widgets.dart'; // Ensure ExactBlueTick is defined here
 import 'login_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
+
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  final PageController _controller = PageController();
+  final PageController _pageController = PageController();
   int _currentPage = 0;
 
+  // Data and Image positioning
   final List<Map<String, dynamic>> _pages = [
     {
-      "image": "assets/images/onboarding1.png",
       "title": "Smart rides. one app.",
+      "image": "assets/images/onboarding1.png",
+      "w": 434.0, "h": 434.0, "t": 35.0, "l": -23.0,
       "features": ["Personal rides, anytime", "Easy office commutes", "Shared & scheduled trips"]
     },
     {
-      "image": "assets/images/onboarding2.png",
       "title": "Office Trips, All Set",
+      "image": null, // Page 2: White space
       "features": ["Auto pickup for login rides", "Easy request for logout rides", "Company-managed billing"]
     },
     {
-      "image": "assets/images/onboarding3.png",
       "title": "Safety Comes First",
+      "image": "assets/images/onboarding3.png",
+      "w": 732.0, "h": 409.0, "t": 51.0, "l": -165.0,
       "features": ["Women-only ride option", "Live tracking & ride PIN", "SOS & family sharing"]
     },
   ];
@@ -34,70 +39,155 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginScreen())),
-                  style: OutlinedButton.styleFrom(shape: const StadiumBorder(), side: const BorderSide(color: Colors.black12)),
-                  child: const Text("Skip", style: TextStyle(color: Colors.black)),
-                ),
-              ),
-            ),
-            Expanded(
-              child: PageView.builder(
-                controller: _controller,
-                onPageChanged: (v) => setState(() => _currentPage = v),
-                itemCount: _pages.length,
-                itemBuilder: (context, i) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      body: Center(
+        child: Container(
+          width: 393,
+          height: MediaQuery.of(context).size.height, // Use full screen height
+          decoration: const BoxDecoration(color: Colors.white),
+          child: Stack(
+            children: [
+              // 1. THE SWIPEABLE CONTENT
+              PageView.builder(
+                controller: _pageController,
+                onPageChanged: (index) => setState(() => _currentPage = index),
+                itemCount: 3,
+                itemBuilder: (context, index) {
+                  final data = _pages[index];
+                  return Stack(
                     children: [
-                      Center(child: Image.asset(_pages[i]['image'], height: 220, errorBuilder: (c, e, s) => const Icon(Icons.image, size: 100, color: Colors.grey))),
-                      const SizedBox(height: 40),
-                      Text(_pages[i]['title'], style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 20),
-                      ...(_pages[i]['features'] as List<String>).map((f) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Row(children: [const Icon(Icons.check, color: AppColors.primaryBlue), const SizedBox(width: 10), Text(f, style: const TextStyle(fontSize: 17))]),
-                      )),
+                      // Image (Top area)
+                      if (data['image'] != null)
+                        Positioned(
+                          top: data['imgT'] ?? data['t'],
+                          left: data['imgL'] ?? data['l'],
+                          child: Image.asset(
+                            data['image'],
+                            width: data['w'],
+                            height: data['h'],
+                            fit: BoxFit.contain,
+                            errorBuilder: (c, e, s) => const SizedBox(),
+                          ),
+                        ),
+
+                      // Text Content (Fixed at top 435px to match your design)
+                      Positioned(
+                        top: 435,
+                        left: 25,
+                        width: 342,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              data['title'],
+                              style: const TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                height: 1.1,
+                              ),
+                            ),
+                            const SizedBox(height: 25),
+                            ...((data['features'] as List<String>).map((f) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: Row(
+                                    children: [
+                                      const ExactBlueTick(size: 18), // Custom Sharp Tick
+                                      const SizedBox(width: 15),
+                                      Text(
+                                        f,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ))),
+                          ],
+                        ),
+                      ),
                     ],
+                  );
+                },
+              ),
+
+              // 2. SKIP BUTTON (Top Right)
+              Positioned(
+                top: 60,
+                right: 25,
+                child: GestureDetector(
+                  onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (c) => const LoginScreen())),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(color: Colors.black, width: 1),
+                    ),
+                    child: const Text("Skip", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(3, (i) => Container(
-                margin: const EdgeInsets.only(right: 5),
-                height: 8, width: _currentPage == i ? 24 : 8,
-                decoration: BoxDecoration(color: _currentPage == i ? AppColors.primaryBlue : Colors.blue.withOpacity(0.2), borderRadius: BorderRadius.circular(5)),
-              )),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(30),
-              child: SizedBox(
-                width: double.infinity, height: 55,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (_currentPage == 2) {
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
-                    } else {
-                      _controller.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.ease);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryBlue, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                  child: Text(_currentPage == 2 ? "Get Started" : "Next", style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+
+              // 3. INDICATOR DOTS (Fixed to the BOTTOM of the screen)
+              Positioned(
+                bottom: 100, // Anchored to bottom so it never disappears
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(3, (index) {
+                    bool isSelected = _currentPage == index;
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: isSelected ? 22 : 9,
+                      height: 9,
+                      decoration: BoxDecoration(
+                        color: isSelected ? AppColors.primaryBlue : const Color(0xFFD1D5DB),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                    );
+                  }),
                 ),
               ),
-            ),
-          ],
+
+              // 4. GET STARTED BUTTON (Visible ONLY on page 3)
+              // Anchored to bottom: 30px
+              if (_currentPage == 2)
+                Positioned(
+                  bottom: 30,
+                  left: 20,
+                  right: 20,
+                  child: SizedBox(
+                    height: 55,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (c) => const LoginScreen()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: const Text(
+                        "Get Started",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
