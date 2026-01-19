@@ -21,6 +21,21 @@ version: 1.0.0+1
 environment:
   sdk: ^3.9.2
 
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+      # For the interactive map
+     # For coordinate objects (LatLng)
+        # For getting device current location
+  cupertino_icons: ^1.0.6
+  mapbox_search: ^4.3.2    #
+  geolocator: ^13.0.1
+  latlong2: ^0.9.1
+  flutter_map: ^8.2.2
+  http: ^1.2.1
+  google_fonts: ^6.2.1
+  mapbox_maps_flutter: ^2.5.0 
+
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -28,32 +43,14 @@ environment:
 # dependencies can be manually updated by changing the version numbers below to
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
-dependencies:
-  flutter:
-    sdk: flutter
+
     
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   
 
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_map: ^8.0.0      # For the interactive map
-  latlong2: ^0.9.1        # For coordinate objects (LatLng)
-  geolocator: ^13.0.0       # For getting device current location
-<<<<<<< HEAD
-  mapbox_search: ^4.3.2
-  mapbox_maps_flutter: ^2.5.0     # For geocoding and address searching
-  http: ^1.2.0 
-  intl: ^0.19.0
-  google_fonts: ^6.2.1
-=======
-  mapbox_search: ^4.3.2    # For geocoding and address searching
-  http: ^1.2.0
-  mapbox_maps_flutter: ^2.17.0
-  geocoding: ^3.0.0
->>>>>>> e53c68027767e61c03ff3f45536a904ed71f7019
+
+
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -73,7 +70,6 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-<<<<<<< HEAD
        - assets/images/onboarding1.png
        - assets/images/onboarding3.png
        - assets/images/bike.png
@@ -82,10 +78,7 @@ flutter:
        - assets/images/car6.png
        - assets/images/pillion.png
        - assets/images/corp.png
-=======
-       - assets/images/saftycomes.png
-       - assets/images/smartride.png
->>>>>>> e53c68027767e61c03ff3f45536a904ed71f7019
+
 
   # To add assets to your application, add an assets section, like this:
   # assets:

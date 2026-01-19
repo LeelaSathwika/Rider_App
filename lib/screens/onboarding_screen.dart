@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants.dart';
-<<<<<<< HEAD:lib/screens/onboarding_screen.dart
 import '../widgets/shared_widgets.dart'; // Ensure ExactBlueTick is defined here
 import 'login_screen.dart';
-=======
-import '../screens/login_screen.dart';
->>>>>>> e53c68027767e61c03ff3f45536a904ed71f7019:lib/onboarding/onboarding_screen.dart
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -18,32 +14,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  // Data and Image positioning
-  final List<Map<String, dynamic>> _pages = [
+  // Data mapping based on your exact image positioning and properties
+  final List<Map<String, dynamic>> _onboardingData = [
     {
-<<<<<<< HEAD:lib/screens/onboarding_screen.dart
-=======
-      "image": "assets/images/smartride.png",
->>>>>>> e53c68027767e61c03ff3f45536a904ed71f7019:lib/onboarding/onboarding_screen.dart
       "title": "Smart rides. one app.",
       "image": "assets/images/onboarding1.png",
       "w": 434.0, "h": 434.0, "t": 35.0, "l": -23.0,
       "features": ["Personal rides, anytime", "Easy office commutes", "Shared & scheduled trips"]
     },
     {
-<<<<<<< HEAD:lib/screens/onboarding_screen.dart
-=======
-      "image": "assets/images/smartride.png",
->>>>>>> e53c68027767e61c03ff3f45536a904ed71f7019:lib/onboarding/onboarding_screen.dart
       "title": "Office Trips, All Set",
-      "image": null, // Page 2: White space
+      "image": null, // Page 2: Clean White Space as requested
       "features": ["Auto pickup for login rides", "Easy request for logout rides", "Company-managed billing"]
     },
     {
-<<<<<<< HEAD:lib/screens/onboarding_screen.dart
-=======
-      "image": "assets/images/saftycomes.png",
->>>>>>> e53c68027767e61c03ff3f45536a904ed71f7019:lib/onboarding/onboarding_screen.dart
       "title": "Safety Comes First",
       "image": "assets/images/onboarding3.png",
       "w": 732.0, "h": 409.0, "t": 51.0, "l": -165.0,
@@ -57,25 +41,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       backgroundColor: Colors.white,
       body: Center(
         child: Container(
+          // CSS: width: 393; height: 851;
           width: 393,
-          height: MediaQuery.of(context).size.height, // Use full screen height
+          height: 851,
           decoration: const BoxDecoration(color: Colors.white),
+          clipBehavior: Clip.antiAlias,
           child: Stack(
             children: [
-              // 1. THE SWIPEABLE CONTENT
+              // 1. SWIPEABLE CONTENT AREA
               PageView.builder(
                 controller: _pageController,
                 onPageChanged: (index) => setState(() => _currentPage = index),
                 itemCount: 3,
                 itemBuilder: (context, index) {
-                  final data = _pages[index];
+                  final data = _onboardingData[index];
                   return Stack(
                     children: [
-                      // Image (Top area)
+                      // Vector Illustration (Page 1 & 3)
                       if (data['image'] != null)
                         Positioned(
-                          top: data['imgT'] ?? data['t'],
-                          left: data['imgL'] ?? data['l'],
+                          top: data['t'],
+                          left: data['l'],
                           child: Image.asset(
                             data['image'],
                             width: data['w'],
@@ -85,7 +71,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           ),
                         ),
 
-                      // Text Content (Fixed at top 435px to match your design)
+                      // Text block - Exact position top: 435px; left: 25px;
                       Positioned(
                         top: 435,
                         left: 25,
@@ -102,12 +88,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 height: 1.1,
                               ),
                             ),
-                            const SizedBox(height: 25),
+                            const SizedBox(height: 25), // Spacing between title and list
                             ...((data['features'] as List<String>).map((f) => Padding(
                                   padding: const EdgeInsets.only(bottom: 12),
                                   child: Row(
                                     children: [
-                                      const ExactBlueTick(size: 18), // Custom Sharp Tick
+                                      const ExactBlueTick(size: 18), // Custom Sharp Tick from shared_widgets
                                       const SizedBox(width: 15),
                                       Text(
                                         f,
@@ -128,55 +114,65 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
               ),
 
-              // 2. SKIP BUTTON (Top Right)
+              // 2. SKIP BUTTON - Fixed at top: 74px; left: 319px;
               Positioned(
-                top: 60,
-                right: 25,
+                top: 74,
+                left: 319,
                 child: GestureDetector(
-                  onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (c) => const LoginScreen())),
+                  onTap: () => Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (c) => const LoginScreen()),
+                  ),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    width: 44,
+                    height: 25,
+                    alignment: Alignment.center,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(28),
                       border: Border.all(color: Colors.black, width: 1),
                     ),
-                    child: const Text("Skip", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      "Skip",
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ),
 
-              // 3. INDICATOR DOTS (Fixed to the BOTTOM of the screen)
+              // 3. INDICATOR DOTS - Positioned at top: 745px (Calculated to be below text)
               Positioned(
-                bottom: 100, // Anchored to bottom so it never disappears
-                left: 0,
-                right: 0,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(3, (index) {
-                    bool isSelected = _currentPage == index;
-                    return AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      width: isSelected ? 22 : 9,
-                      height: 9,
-                      decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primaryBlue : const Color(0xFFD1D5DB),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                    );
-                  }),
+                top: 745, 
+                left: 175,
+                child: SizedBox(
+                  width: 44,
+                  height: 9,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: List.generate(3, (index) {
+                      bool isSelected = _currentPage == index;
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        width: isSelected ? 20 : 9,
+                        height: 9,
+                        decoration: BoxDecoration(
+                          color: isSelected ? AppColors.primaryBlue : const Color(0xFFD1D5DB),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                      );
+                    }),
+                  ),
                 ),
               ),
 
-              // 4. GET STARTED BUTTON (Visible ONLY on page 3)
-              // Anchored to bottom: 30px
+              // 4. GET STARTED BUTTON - Fixed at bottom area top: 785px
+              // ONLY visible on the 3rd screen
               if (_currentPage == 2)
                 Positioned(
-                  bottom: 30,
-                  left: 20,
-                  right: 20,
+                  top: 785,
+                  left: 16,
                   child: SizedBox(
-                    height: 55,
+                    width: 361,
+                    height: 52,
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.pushReplacement(
