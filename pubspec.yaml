@@ -35,6 +35,14 @@ dev_dependencies:
   http: ^1.2.1
   google_fonts: ^6.2.1
   mapbox_maps_flutter: ^2.5.0 
+  intl: ^0.19.0
+  flutter_keyboard_visibility: ^6.0.0 # UI adjustment when typing
+
+
+  # --- FIREBASE PACKAGES ---
+  firebase_core: ^3.10.1    # Required for all Firebase apps
+  firebase_auth: ^5.4.1    # Required for OTP (Phone Auth)
+  cloud_firestore: ^5.6.2  # Required for storing User Info
 
 
 # Dependencies specify other packages that your package needs in order to work.
@@ -78,6 +86,7 @@ flutter:
        - assets/images/car6.png
        - assets/images/pillion.png
        - assets/images/corp.png
+       - assets/images/parcel.png
 
 
   # To add assets to your application, add an assets section, like this:

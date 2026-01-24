@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "97581640765",
+    "project_id": "nexoryd",
+    "storage_bucket": "nexoryd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:97581640765:android:81feac324a836ed6884e54",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_rider"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXYpGvXrSI72zBUOWtcYyTwnQrDgLNkfo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -158,7 +158,7 @@ class _CancelRideScreenState extends State<CancelRideScreen> {
       ),
     );
   }
-
+ 
   Widget _policyItem(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),

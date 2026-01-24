@@ -2,24 +2,22 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-// Official Mapbox Professional SDK
+// Official Mapbox SDK
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
-import 'package:geolocator/geolocator.dart' as geo;
+import 'package:geolocator/geolocator.dart' as geo; // Alias to prevent conflict
 import 'package:http/http.dart' as http;
 import '../../constants.dart';
 import 'location_search_screen.dart';
 import 'pickup_location_screen.dart';
 import 'ride_booking_screen.dart';
+import 'parcel_pickup.dart';
+import 'corporate_details_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String address;
-  final Function(String) onUpdate; // Updates the pickup text in the main app state
+  final Function(String) onUpdate;
 
-  const HomeScreen({
-    super.key,
-    required this.address,
-    required this.onUpdate,
-  });
+  const HomeScreen({super.key, required this.address, required this.onUpdate});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -30,34 +28,56 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isCashBackMode = false;
   String destinationAddress = "Enter Destination";
   MapboxMap? mapboxMap;
-  bool isManualLocation = false; // Prevents GPS from overwriting manual pickup
-
-  // Coordinates for Navigation
+  bool isManualLocation = false;
   Point? pickupPoint;
-  Point? dropPoint;
 
   @override
   void initState() {
     super.initState();
+    // Initialize Mapbox Token
     MapboxOptions.setAccessToken(mapboxToken);
   }
 
-  // ================= 1. MAP INITIALIZATION & GPS =================
+  // ================= 1. MAP & GPS LOGIC =================
   void _onMapCreated(MapboxMap controller) async {
     mapboxMap = controller;
 
-    // Force Android/iOS Permission Popup
+    // A. Force Permission Popup on Mobile
     geo.LocationPermission permission = await geo.Geolocator.checkPermission();
     if (permission == geo.LocationPermission.denied) {
       permission = await geo.Geolocator.requestPermission();
     }
 
-    // Enable Professional Blue Pulsing Dot
+    // B. Enable Professional Blue Pulsing Dot
     await mapboxMap!.location.updateSettings(
-      LocationComponentSettings(enabled: true, pulsingEnabled: true),
+      LocationComponentSettings(
+        enabled: true,
+        pulsingEnabled: true,
+        pulsingMaxRadius: 15.0,
+      ),
     );
 
+    // C. Add 3D Buildings
+    _add3DBuildings();
+
     _setInitialLocation();
+  }
+
+  void _add3DBuildings() async {
+    mapboxMap?.style.styleLayerExists("3d-buildings").then((exists) async {
+      if (!exists) {
+        await mapboxMap?.style.addLayer(FillExtrusionLayer(
+          id: "3d-buildings",
+          sourceId: "composite",
+          sourceLayer: "building",
+          minZoom: 15.0,
+          fillExtrusionHeightExpression: ['get', 'height'],
+          fillExtrusionBaseExpression: ['get', 'min_height'],
+          fillExtrusionOpacity: 0.6,
+          fillExtrusionColor: Colors.grey.shade300.value,
+        ));
+      }
+    });
   }
 
   Future<void> _setInitialLocation() async {
@@ -66,15 +86,18 @@ class _HomeScreenState extends State<HomeScreen> {
       pickupPoint = Point(coordinates: Position(pos.longitude, pos.latitude));
 
       if (mapboxMap != null) {
-        await mapboxMap!.flyTo(CameraOptions(center: pickupPoint!, zoom: 15.5), MapAnimationOptions(duration: 1000));
+        // Fly to user with Tilt (Pitch) for detailed 3D look
+        await mapboxMap!.flyTo(
+          CameraOptions(center: pickupPoint!, zoom: 16.0, pitch: 45.0),
+          MapAnimationOptions(duration: 1500),
+        );
       }
 
-      // Auto-update address text ONLY if user hasn't manually picked a city/pin yet
       if (!isManualLocation) {
         _reverseGeocode(pos.latitude, pos.longitude);
       }
     } catch (e) {
-      debugPrint("GPS Fix Error: $e");
+      debugPrint("GPS Error: $e");
     }
   }
 
@@ -91,49 +114,42 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ================= 2. BUTTON LOGIC (EDIT & WHERE TO) =================
 
-  // Function for the "EDIT" button
   Future<void> _handleEditPickup() async {
-    final String? result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (c) => const PickupLocationScreen()),
-    );
-
+    final String? result = await Navigator.push(context, MaterialPageRoute(builder: (c) => const PickupLocationScreen()));
     if (result != null && result.isNotEmpty) {
-      setState(() => isManualLocation = true); // Lock the text box from GPS updates
-      widget.onUpdate(result); // Update UI with selected city or pin address
-
-      // Move Map Camera to the new manual address
-      final url = "https://api.mapbox.com/geocoding/v5/mapbox.places/${Uri.encodeComponent(result)}.json?access_token=$mapboxToken&limit=1";
-      final res = await http.get(Uri.parse(url));
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        if (data['features'].isNotEmpty) {
-          final c = data['features'][0]['center'];
-          pickupPoint = Point(coordinates: Position(c[0], c[1]));
-          mapboxMap?.flyTo(CameraOptions(center: pickupPoint!, zoom: 15.5), MapAnimationOptions(duration: 1000));
-        }
-      }
+      setState(() => isManualLocation = true);
+      widget.onUpdate(result);
+      _geocodeAndMoveCamera(result);
     }
   }
 
-  // Function for "WHERE TO?" (Destination)
-  Future<void> _handleDestination(String address) async {
+  Future<void> _handleDestinationSelection(String address) async {
     showDialog(context: context, barrierDismissible: false, builder: (c) => const Center(child: CircularProgressIndicator()));
-
+    
+    // Geocode destination to get coordinates
     final url = "https://api.mapbox.com/geocoding/v5/mapbox.places/${Uri.encodeComponent(address)}.json?access_token=$mapboxToken&limit=1";
     final res = await http.get(Uri.parse(url));
-    
-    Navigator.pop(context); // Close loading
+    Navigator.pop(context); // Close loader
 
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body);
       if (data['features'].isNotEmpty) {
-        final c = data['features'][0]['center'];
-        dropPoint = Point(coordinates: Position(c[0], c[1]));
         setState(() => destinationAddress = address);
-
-        // Auto-popup Ride Booking
+        // 👉 DIRECTLY REDIRECT TO BOOKING SCREEN
         Navigator.push(context, MaterialPageRoute(builder: (c) => RideBookingScreen(pickup: widget.address, destination: address)));
+      }
+    }
+  }
+
+  Future<void> _geocodeAndMoveCamera(String addr) async {
+    final url = "https://api.mapbox.com/geocoding/v5/mapbox.places/${Uri.encodeComponent(addr)}.json?access_token=$mapboxToken&limit=1";
+    final res = await http.get(Uri.parse(url));
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+      if (data['features'].isNotEmpty) {
+        final c = data['features'][0]['center'];
+        pickupPoint = Point(coordinates: Position(c[0], c[1]));
+        mapboxMap?.flyTo(CameraOptions(center: pickupPoint!, zoom: 16.0, pitch: 45.0), MapAnimationOptions(duration: 1500));
       }
     }
   }
@@ -143,10 +159,14 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // MAPBOX SDK MAP
-          MapWidget(key: const ValueKey("homeMap"), onMapCreated: _onMapCreated),
+          // 1. THE DETAILED MAP
+          MapWidget(
+            key: const ValueKey("homeMap"),
+            styleUri: MapboxStyles.MAPBOX_STREETS,
+            onMapCreated: _onMapCreated,
+          ),
 
-          // DRAGGABLE UI SHEET
+          // 2. DRAGGABLE UI SHEET
           DraggableScrollableSheet(
             initialChildSize: 0.6,
             minChildSize: 0.45,
@@ -164,55 +184,49 @@ class _HomeScreenState extends State<HomeScreen> {
                   Center(child: Container(width: 40, height: 5, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)))),
                   const SizedBox(height: 25),
 
-                  // 1. PICKUP BOX
-                  GestureDetector(
-                    onTap: _handleEditPickup,
-                    child: _buildTile(Icons.my_location, "PICK UP", widget.address, true),
-                  ),
+                  // PICKUP TILE
+                  _buildInputTile(Icons.my_location, "PICK UP", widget.address, true, _handleEditPickup),
 
                   const SizedBox(height: 12),
 
-                  // 2. WHERE TO BOX
-                  GestureDetector(
-                    onTap: () async {
-                      final res = await Navigator.push(context, MaterialPageRoute(builder: (c) => const LocationSearchScreen(title: "Destination")));
-                      if (res != null) _handleDestination(res);
-                    },
-                    child: _buildTile(Icons.search, "WHERE TO?", destinationAddress, destinationAddress != "Enter Destination"),
-                  ),
+                  // WHERE TO TILE
+                  _buildInputTile(Icons.search, "WHERE TO?", destinationAddress, false, () async {
+                    final res = await Navigator.push(context, MaterialPageRoute(builder: (c) => LocationSearchScreen(title: "Destination", currentPickup: widget.address)));
+                    if (res != null) _handleDestinationSelection(res);
+                  }),
 
                   const SizedBox(height: 30),
-
-                  // 3. SERVICES GRID (6 IMAGES)
-                  _buildHeader("Services"),
+                  _buildSectionHeader("Services"),
                   const SizedBox(height: 15),
+
+                  // SERVICES GRID (6 IMAGES)
                   GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 3,
-                    childAspectRatio: 0.85,
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
+                    shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisCount: 3, childAspectRatio: 0.85, mainAxisSpacing: 10, crossAxisSpacing: 10,
                     children: [
                       _svcItem("Bike", "1 Person", "assets/images/bike.png", Icons.directions_bike),
                       _svcItem("Auto", "3 Persons", "assets/images/auto.png", Icons.electric_rickshaw),
                       _svcItem("Car", "4 Seater", "assets/images/car4.png", Icons.directions_car),
                       _svcItem("Car", "6 Seater", "assets/images/car6.png", Icons.airport_shuttle),
                       _svcItem("Pillion", "Sharing", "assets/images/pillion.png", Icons.moped),
-                      _svcItem("Corp Ride", "6 Seater", "assets/images/corp.png", Icons.business),
+                      _svcItem("Corporate Ride", "6 Seater", "assets/images/corp.png", Icons.business, () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const CorporateDetailsScreen()),
+                        );
+                      }),
                     ],
                   ),
 
                   const SizedBox(height: 20),
+                  
+                  // PARCEL CARD WITH IMAGE
                   _parcelCard(),
 
                   const SizedBox(height: 30),
-
-                  // 4. RECENT SEARCHES
                   const Text("RECENT SEARCHES", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1.2)),
                   const SizedBox(height: 15),
-                  _recentItem("Secunderabad, Hyderabad", "5th Block, Indiranagar", "2.2 km"),
-                  _recentItem("Tech Mahendra Office", "Block 7, Kukatpally", "2.6 km"),
+                  _recentItem("Secunderabad, Hyderabad", "5th Block, Road No-14", "2.2 km"),
+                  _recentItem("Kukatpally Office", "Block 7, Kukatpally", "2.6 km"),
                 ],
               ),
             ),
@@ -222,58 +236,65 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ================= UI BUILDERS =================
+  // --- UI COMPONENTS ---
 
-  Widget _buildTile(IconData icon, String label, String value, bool showEdit) => Container(
-    padding: const EdgeInsets.all(15),
-    decoration: BoxDecoration(borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.black12)),
-    child: Row(children: [
-      Icon(icon, color: AppColors.primaryBlue, size: 22),
-      const SizedBox(width: 15),
-      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF2E3E5C)), maxLines: 1, overflow: TextOverflow.ellipsis),
-      ])),
-      if (showEdit) const Text("Edit", style: TextStyle(color: AppColors.primaryBlue, fontWeight: FontWeight.bold, fontSize: 13)),
-    ]),
+  Widget _buildInputTile(IconData i, String l, String v, bool edit, VoidCallback? onTap) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.all(15), decoration: BoxDecoration(borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.black12)),
+      child: Row(children: [
+        Icon(i, color: AppColors.primaryBlue, size: 22), const SizedBox(width: 15),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(l, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
+          Text(v, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF2E3E5C)), maxLines: 1, overflow: TextOverflow.ellipsis),
+        ])),
+        if (edit) const Text("Edit", style: TextStyle(color: AppColors.primaryBlue, fontWeight: FontWeight.bold)),
+      ]),
+    ),
   );
 
-  Widget _buildHeader(String t) => Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+  Widget _svcItem(String n, String s, String path, IconData backupIcon, [VoidCallback? onTap]) {
+  return GestureDetector(
+    onTap: onTap, // Handles the click
+    child: Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB), 
+        borderRadius: BorderRadius.circular(15), 
+        border: Border.all(color: const Color(0xFFF3F4F6)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center, 
+        children: [
+          Image.asset(
+            path, 
+            height: 35, 
+            errorBuilder: (c, e, s) => Icon(backupIcon, size: 30, color: Colors.blueGrey[700]),
+          ),
+          const SizedBox(height: 5),
+          Text(n, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+          Text(s, style: const TextStyle(color: Colors.grey, fontSize: 9)),
+        ],
+      ),
+    ),
+  );
+}
+
+  Widget _parcelCard() => GestureDetector(
+    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (c) => const ParcelPickupScreen())),
+    child: Container(
+      padding: const EdgeInsets.all(15), decoration: BoxDecoration(border: Border.all(color: Colors.black12), borderRadius: BorderRadius.circular(15)),
+      child: Row(children: [
+        const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("Parcel", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)), Text("Max 4kgs", style: TextStyle(color: Colors.grey, fontSize: 12))]),
+        const Spacer(),
+        Image.asset('assets/images/parcel.png', height: 45, errorBuilder: (c,e,s) => const Icon(Icons.inventory_2, color: Colors.orange)),
+      ]),
+    ),
+  );
+
+  Widget _buildSectionHeader(String t) => Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
     Text(t, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-    Row(children: [
-      const Text("Cash Back Mode", style: TextStyle(fontSize: 13, color: Colors.grey)),
-      const SizedBox(width: 8),
-      CupertinoSwitch(value: isCashBackMode, activeTrackColor: AppColors.primaryBlue, onChanged: (v) => setState(() => isCashBackMode = v))
-    ])
+    CupertinoSwitch(value: isCashBackMode, activeTrackColor: AppColors.primaryBlue, onChanged: (v) => setState(() => isCashBackMode = v))
   ]);
 
-  Widget _svcItem(String n, String s, String asset, IconData backup) => Container(
-    decoration: BoxDecoration(color: const Color(0xFFF9FAFB), borderRadius: BorderRadius.circular(15), border: Border.all(color: const Color(0xFFF3F4F6))),
-    child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Image.asset(asset, height: 35, errorBuilder: (c, e, s) => Icon(backup, size: 30, color: Colors.blueGrey)),
-      const SizedBox(height: 5),
-      Text(n, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-      Text(s, style: const TextStyle(color: Colors.grey, fontSize: 9)),
-    ]),
-  );
-
-  Widget _parcelCard() => Container(
-    padding: const EdgeInsets.all(15),
-    decoration: BoxDecoration(border: Border.all(color: Colors.black12), borderRadius: BorderRadius.circular(15)),
-    child: const Row(children: [
-      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("Parcel", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)), Text("Max 4kgs", style: TextStyle(color: Colors.grey, fontSize: 12))]),
-      Spacer(),
-      Icon(Icons.inventory_2, color: Colors.orange, size: 35),
-    ]),
-  );
-
-  Widget _recentItem(String t, String s, String dist) => Padding(
-    padding: const EdgeInsets.only(bottom: 20),
-    child: Row(children: [
-      const Icon(Icons.access_time, color: Colors.grey, size: 20),
-      const SizedBox(width: 15),
-      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(t, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)), Text(s, style: const TextStyle(color: Colors.grey, fontSize: 12))])),
-      Text(dist, style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold)),
-    ]),
-  );
+  Widget _recentItem(String t, String s, String d) => Padding(padding: const EdgeInsets.only(bottom: 20), child: Row(children: [const Icon(Icons.access_time, color: Colors.grey, size: 20), const SizedBox(width: 15), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(t, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)), Text(s, style: const TextStyle(color: Colors.grey, fontSize: 12))])), Text(d, style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold))]));
 }

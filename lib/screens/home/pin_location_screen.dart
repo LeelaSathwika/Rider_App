@@ -1,8 +1,10 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mapbox_search/mapbox_search.dart' as mb;
-import 'dart:async';
+import 'package:http/http.dart' as http;
 import '../../constants.dart';
 import '../../widgets/shared_widgets.dart';
 
@@ -14,30 +16,36 @@ class PinLocationScreen extends StatefulWidget {
 }
 
 class _PinLocationScreenState extends State<PinLocationScreen> {
-  // Starting coordinates (Hyderabad center)
-  LatLng _center = const LatLng(17.3850, 78.4867);
-  String _pinnedAddr = "Loading address...";
+  // Coordinates for initial view (e.g., Hyderabad)
+  LatLng _mapCenter = const LatLng(17.3850, 78.4867);
+  String _pinnedAddr = "Select location on map";
   
   final mb.GeoCoding geoCoding = mb.GeoCoding(apiKey: mapboxToken);
   final MapController _mapController = MapController();
-  Timer? _timer;
+  final TextEditingController _searchController = TextEditingController();
+  
+  List<mb.MapBoxPlace> _searchResults = [];
+  Timer? _debounce;
+  bool _isSearching = false;
 
   @override
   void initState() {
     super.initState();
-    // 1. Fetch the address for the initial center point immediately
-    _fetchAddress(_center);
+    // Fetch address for the default center immediately
+    _fetchAddressFromCoords(_mapCenter);
   }
 
   @override
   void dispose() {
-    // 2. CRITICAL: Cancel timer to prevent memory leaks/crashes
-    _timer?.cancel();
+    _debounce?.cancel();
+    _searchController.dispose();
     super.dispose();
   }
 
-  // Helper function to turn LatLng into a readable string
-  Future<void> _fetchAddress(LatLng position) async {
+  // ================= 1. GEOCODING LOGIC =================
+
+  // REVERSE: Coordinates -> Address (When dragging map)
+  Future<void> _fetchAddressFromCoords(LatLng position) async {
     final res = await geoCoding.getAddress(
       (lat: position.latitude, long: position.longitude),
     );
@@ -50,29 +58,75 @@ class _PinLocationScreenState extends State<PinLocationScreen> {
     }, (failure) => null);
   }
 
-  void _onMove(MapCamera pos, bool hasGesture) {
-    // 3. Only update address if the USER is dragging the map
-    if (!hasGesture) return;
+  // FORWARD: Search Text -> Suggestions (When typing)
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    if (query.isEmpty) {
+      setState(() => _searchResults = []);
+      return;
+    }
 
-    if (_timer?.isActive ?? false) _timer!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 600), () async {
+      setState(() => _isSearching = true);
+      final res = await geoCoding.getPlaces(query);
+      res.fold(
+        (success) => setState(() {
+          _searchResults = success;
+          _isSearching = false;
+        }),
+        (failure) => setState(() => _isSearching = false),
+      );
+    });
+  }
+
+  // ================= 2. INTERACTION HANDLERS =================
+
+  // When map is dragged
+  void _handleMapMove(MapCamera pos, bool hasGesture) {
+    if (!hasGesture) return; // Only trigger if user moves it, not code
+
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
     
-    _timer = Timer(const Duration(milliseconds: 700), () {
-      _fetchAddress(pos.center);
+    _debounce = Timer(const Duration(milliseconds: 800), () {
+      _fetchAddressFromCoords(pos.center);
       setState(() {
-        _center = pos.center;
+        _mapCenter = pos.center;
       });
     });
+  }
+
+  // When a search result is clicked
+  void _onSuggestionSelected(mb.MapBoxPlace place) {
+    final coords = place.geometry?.coordinates;
+    if (coords != null) {
+      final newLatLng = LatLng(coords.lat, coords.long);
+      
+      // Move map focus to searched location
+      _mapController.move(newLatLng, 16);
+      
+      setState(() {
+        _pinnedAddr = place.placeName ?? "";
+        _mapCenter = newLatLng;
+        _searchResults = []; // Hide search list
+        _searchController.clear();
+        FocusScope.of(context).unfocus(); // Close keyboard
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Set Pickup Location", 
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text("Pin Location", 
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
         backgroundColor: Colors.white, 
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: Stack(
         children: [
@@ -80,9 +134,9 @@ class _PinLocationScreenState extends State<PinLocationScreen> {
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
-              initialCenter: _center,
+              initialCenter: _mapCenter,
               initialZoom: 15,
-              onPositionChanged: (p, g) => _onMove(p, g),
+              onPositionChanged: (p, g) => _handleMapMove(p, g),
             ),
             children: [
               TileLayer(
@@ -92,22 +146,84 @@ class _PinLocationScreenState extends State<PinLocationScreen> {
             ],
           ),
 
-          // FIXED CENTER PIN (Blue NexoRyd Style)
+          // THE FIXED BLUE PIN (Center of screen)
           Center(
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 35),
+              padding: const EdgeInsets.only(bottom: 35), 
               child: Icon(Icons.location_on, color: AppColors.primaryBlue, size: 50),
             ),
           ),
 
-          // BOTTOM ADDRESS CARD
+          // FLOATING SEARCH BAR & RESULTS
+          Positioned(
+            top: 20, left: 20, right: 20,
+            child: Column(
+              children: [
+                // Floating Box
+                Container(
+                  height: 55,
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)],
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.search, color: Colors.grey),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: _onSearchChanged,
+                          decoration: const InputDecoration(
+                            hintText: "Search location",
+                            border: InputBorder.none,
+                          ),
+                        ),
+                      ),
+                      if (_isSearching) const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                    ],
+                  ),
+                ),
+                
+                // Search Suggestions List
+                if (_searchResults.isNotEmpty)
+                  Container(
+                    margin: const EdgeInsets.only(top: 5),
+                    constraints: const BoxConstraints(maxHeight: 250),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+                    ),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: _searchResults.length,
+                      separatorBuilder: (c, i) => const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final place = _searchResults[index];
+                        return ListTile(
+                          leading: const Icon(Icons.location_on_outlined, size: 20),
+                          title: Text(place.text ?? "", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          subtitle: Text(place.placeName ?? "", maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12)),
+                          onTap: () => _onSuggestionSelected(place),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          // BOTTOM CONFIRMATION CARD
           Positioned(
             bottom: 0, left: 0, right: 0,
             child: Container(
               padding: const EdgeInsets.all(24),
               decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                 boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 15)],
               ),
               child: Column(
@@ -117,18 +233,18 @@ class _PinLocationScreenState extends State<PinLocationScreen> {
                     children: [
                       CircleAvatar(
                         backgroundColor: AppColors.primaryBlue.withOpacity(0.1), 
-                        child: const Icon(Icons.location_on, color: AppColors.primaryBlue, size: 20)
+                        child: const Icon(Icons.location_on, color: AppColors.primaryBlue, size: 22)
                       ),
                       const SizedBox(width: 15),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text("PINNED LOCATION", 
-                              style: TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.bold)),
+                            const Text("SELECTED LOCATION", 
+                              style: TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
                             const SizedBox(height: 4),
                             Text(_pinnedAddr, 
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14), 
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15), 
                               maxLines: 2, overflow: TextOverflow.ellipsis),
                           ],
                         ),
@@ -136,12 +252,10 @@ class _PinLocationScreenState extends State<PinLocationScreen> {
                     ],
                   ),
                   const SizedBox(height: 25),
-                  // CONFIRM BUTTON
                   buildPrimaryButton(
-                    text: "Confirm Location",
+                    text: "Confirm Pin Location",
                     onPressed: () {
-                      // Prevent returning the default "Loading..." text
-                      if (_pinnedAddr != "Loading address...") {
+                      if (_pinnedAddr != "Fetching address..." && _pinnedAddr != "Select location on map") {
                         Navigator.pop(context, _pinnedAddr);
                       }
                     },
@@ -150,7 +264,7 @@ class _PinLocationScreenState extends State<PinLocationScreen> {
                 ],
               ),
             ),
-          )
+          ),
         ],
       ),
     );
